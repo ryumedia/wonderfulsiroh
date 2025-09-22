@@ -232,6 +232,28 @@
         input:checked + .slider:before {
             transform: translateX(26px);
         }
+        /* Mobile-specific styles for smaller screens */
+        @media (max-width: 640px) {
+            .app-container {
+                padding: 1.5rem;
+            }
+            .logo {
+                width: 100px; /* Smaller logo */
+            }
+            .form-title {
+                font-size: 1.75rem; /* Smaller title font */
+                margin-top: 0.5rem;
+                margin-bottom: 0.5rem;
+            }
+            .form-description {
+                font-size: 0.875rem;
+                margin-top: 0.25rem;
+                margin-bottom: 0.5rem;
+            }
+            .form-input {
+                margin-top: 0.25rem;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-content min-h-screen">
@@ -247,8 +269,8 @@
         <div id="formView" class="view-section">
             <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiC2m9S2f4ysw5gGqUfzufyiYiCButHXkoheKc3SMmdgfI8KJ22B0-m_pBemahwcKs7x8lxJwE3-_i_HxsJhgq-35oJHc0N3SeBNz7eheHwDRBoapqpowYaPqAnERN-PqME252AVID2n_itecQgF43Ilx2FfkdFQmTVoy57_5xIwXllKYB1FGT3_8qY-Tg/s1023/logo%20wonderful%20siroh.jpg"
                  alt="Reconnect With Siroh Logo" class="logo" onerror="this.onerror=null; this.src='https://placehold.co/150x150/e2e8f0/64748b?text=Logo+Acara'">
-            <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">Reconnect With Siroh</h1>
-            <p class="text-center text-gray-600 mb-4">Silakan isi data diri Anda di bawah ini.</p>
+            <h1 class="text-3xl font-bold text-center text-gray-800 mb-2 form-title">Reconnect With Siroh</h1>
+            <p class="text-center text-gray-600 mb-4 form-description">Silakan isi data diri Anda di bawah ini.</p>
             
             <form id="submissionForm" class="space-y-4">
                 <div id="formStatusMessage" class="hidden text-center text-lg font-semibold text-red-500 my-4">Pendaftaran sudah ditutup.</div>
@@ -416,19 +438,22 @@
         // Jika bukan di lingkungan kanvas, gunakan konfigurasi manual
         if (!isCanvasEnvironment) {
             // =================================================================
-            // PENTING: GANTI KONFIGURASI DI BAWAH INI DENGAN MILIK ANDA!
+            // PENTING: GANTI SELURUH OBJEK di bawah ini DENGAN MILIK ANDA!
             // =================================================================
-            firebaseConfig = {
-               apiKey: "AIzaSyBIBd1KIGWJamZmC7Bjy3aVMA6NYbo4_z4",
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBIBd1KIGWJamZmC7Bjy3aVMA6NYbo4_z4",
   authDomain: "aplikasi-formulir.firebaseapp.com",
   projectId: "aplikasi-formulir",
   storageBucket: "aplikasi-formulir.firebasestorage.app",
   messagingSenderId: "493488207942",
   appId: "1:493488207942:web:a6830318cf37d0145db247",
   measurementId: "G-LVDNCKFR4K"
-            };
+};
             initialAuthToken = null;
         }
+
+        console.log("Firebase config yang digunakan:", firebaseConfig); // Log untuk debugging
 
         const ADMIN_PASSWORD = "4567";
         const appId = firebaseConfig.projectId;
@@ -617,6 +642,12 @@
                     registrationStatusText.classList.remove('text-green-600');
                     registrationStatusText.classList.add('text-red-600');
                 }
+            }, (error) => {
+                console.error("Error in onSnapshot listener:", error);
+                if (error.code === 'permission-denied') {
+                    dashboardStatusIndicator.textContent = 'Gagal memuat status. Pastikan aturan keamanan Firestore sudah benar.';
+                    dashboardStatusIndicator.style.color = '#ef4444';
+                }
             });
         }
         
@@ -653,7 +684,7 @@
                 const infoSource = (selectedInfoSource === 'lainnya') ? document.getElementById('info_other_input').value : selectedInfoSource;
 
                 const selectedInfaqAmount = document.querySelector('input[name="infaq_amount"]:checked').value;
-                let infaqAmount = (selectedInfaqAmount === 'lainnya') ? document.getElementById('infaq_other_input').value.replace(/\./g, '') : selectedInfaqAmount;
+                let infaqAmount = (selectedInfaqAmount === 'lainnya') ? document.getElementById('infaq_other_input').value.replace(/\./g, '') : selectedInfaqAmount.replace(/\./g, ''); // Fix: Remove dots from infaq amounts
 
                 const formData = {
                     nama: document.getElementById('name').value,
