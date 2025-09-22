@@ -415,17 +415,18 @@
 
         // Jika bukan di lingkungan kanvas, gunakan konfigurasi manual
         if (!isCanvasEnvironment) {
-            // GANTI DENGAN KONFIGURASI FIREBASE ANDA SENDIRI
-            // Anda dapat menemukan ini di Firebase Console > Project settings > Your apps
-const firebaseConfig = {
-  apiKey: "AIzaSyBIBd1KIGWJamZmC7Bjy3aVMA6NYbo4_z4",
+            // =================================================================
+            // PENTING: GANTI KONFIGURASI DI BAWAH INI DENGAN MILIK ANDA!
+            // =================================================================
+            firebaseConfig = {
+               apiKey: "AIzaSyBIBd1KIGWJamZmC7Bjy3aVMA6NYbo4_z4",
   authDomain: "aplikasi-formulir.firebaseapp.com",
   projectId: "aplikasi-formulir",
   storageBucket: "aplikasi-formulir.firebasestorage.app",
   messagingSenderId: "493488207942",
   appId: "1:493488207942:web:a6830318cf37d0145db247",
   measurementId: "G-LVDNCKFR4K"
-};
+            };
             initialAuthToken = null;
         }
 
