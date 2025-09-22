@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reconnect With Siroh</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b022f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .app-container {
+            max-width: 900px;
+            width: 90%;
+            background-color: #ffffff;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            min-height: 600px;
+            position: relative;
+        }
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+            transition: all 0.2s ease-in-out;
+            margin-top: 0.5rem;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            color: white;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s, transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-submit {
+            background-color: #ffa138;
+        }
+        .btn-submit:hover {
+            background-color: #e59032;
+        }
+        .btn-export {
+            background-color: #10b981;
+        }
+        .btn-export:hover {
+            background-color: #059669;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .message-box {
+            position: fixed;
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #10b981;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            z-index: 100;
+        }
+        .status-indicator {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        .view-section {
+            display: none;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        #formView, #dashboardView, #passwordView {
+            display: none;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        #formView {
+            display: flex;
+        }
+        .data-card {
+            background-color: #f9fafb;
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            position: relative;
+        }
+        .data-card img {
+            border-radius: 0.75rem;
+            object-fit: contain;
+            max-width: 25%;
+            height: auto;
+            border: 1px solid #e5e7eb;
+        }
+        .admin-icon {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            cursor: pointer;
+            font-size: 2rem;
+            color: #4f46e5;
+            transition: transform 0.2s;
+        }
+        .admin-icon:hover {
+            transform: scale(1.1);
+        }
+        .delete-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background-color: #ef4444;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .delete-btn:hover {
+            background-color: #dc2626;
+        }
+        .logo {
+            display: block;
+            margin: 0 auto 1rem;
+            width: 150px;
+            border-radius: 50%;
+        }
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+        }
+        .modal-btn-group {
+            display: flex;
+            gap: 1rem;
+        }
+        .modal-btn {
+            flex-grow: 1;
+            padding: 0.75rem 1.5rem;
+            text-align: center;
+        }
+        /* Toggle Switch Styles */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #4f46e5;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-content min-h-screen">
+
+    <div class="app-container">
+        
+        <!-- Admin Icon -->
+        <div id="adminIcon" class="admin-icon" title="Halaman Admin">
+            &#x1F464;
+        </div>
+
+        <!-- Formulir View -->
+        <div id="formView" class="view-section">
+            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiC2m9S2f4ysw5gGqUfzufyiYiCButHXkoheKc3SMmdgfI8KJ22B0-m_pBemahwcKs7x8lxJwE3-_i_HxsJhgq-35oJHc0N3SeBNz7eheHwDRBoapqpowYaPqAnERN-PqME252AVID2n_itecQgF43Ilx2FfkdFQmTVoy57_5xIwXllKYB1FGT3_8qY-Tg/s1023/logo%20wonderful%20siroh.jpg"
+                 alt="Reconnect With Siroh Logo" class="logo" onerror="this.onerror=null; this.src='https://placehold.co/150x150/e2e8f0/64748b?text=Logo+Acara'">
+            <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">Reconnect With Siroh</h1>
+            <p class="text-center text-gray-600 mb-4">Silakan isi data diri Anda di bawah ini.</p>
+            
+            <form id="submissionForm" class="space-y-4">
+                <div id="formStatusMessage" class="hidden text-center text-lg font-semibold text-red-500 my-4">Pendaftaran sudah ditutup.</div>
+                <div>
+                    <label for="name" class="block text-sm font-bold text-gray-700">Nama</label>
+                    <input type="text" id="name" name="name" class="form-input" required>
+                </div>
+                <div>
+                    <label for="age" class="block text-sm font-bold text-gray-700">Usia</label>
+                    <input type="number" id="age" name="age" class="form-input" required>
+                </div>
+                <div>
+                    <label for="phone" class="block text-sm font-bold text-gray-700">No.WA</label>
+                    <input type="tel" id="phone" name="phone" class="form-input" required>
+                </div>
+                <div>
+                    <label for="job" class="block text-sm font-bold text-gray-700">Pekerjaan</label>
+                    <input type="text" id="job" name="job" class="form-input" required>
+                </div>
+                <div>
+                    <label for="domicile" class="block text-sm font-bold text-gray-700">Domisili/Kota</label>
+                    <input type="text" id="domicile" name="domicile" class="form-input" required>
+                </div>
+                <div>
+                    <label for="motivation" class="block text-sm font-bold text-gray-700">Motivasi mengikuti kelas</label>
+                    <textarea id="motivation" name="motivation" class="form-input h-24 resize-none" required></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Mendapatkan info acara ini dari</label>
+                    <div class="space-y-2">
+                        <div class="flex items-center">
+                            <input type="radio" id="info_ws" name="info_source" value="IG/WAG Wonderful Siroh" class="h-4 w-4 text-indigo-600 border-gray-300" required>
+                            <label for="info_ws" class="ml-2 block text-sm text-gray-900">IG/WAG Wonderful Siroh</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="radio" id="info_istiqomah" name="info_source" value="IG/WAG Istiqomah" class="h-4 w-4 text-indigo-600 border-gray-300">
+                            <label for="info_istiqomah" class="ml-2 block text-sm text-gray-900">IG/WAG Istiqomah</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="radio" id="info_other" name="info_source" value="lainnya" class="h-4 w-4 text-indigo-600 border-gray-300">
+                            <label for="info_other" class="ml-2 block text-sm text-gray-900">Sumber Lainnya</label>
+                        </div>
+                        <input type="text" id="info_other_input" class="form-input mt-2" placeholder="Tulis sumber info lainnya" style="display: none;">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Infak Terbaikmu untuk 4 kajian + 4 refleksi</label>
+                    <div class="space-y-2">
+                        <div class="flex items-center">
+                            <input type="radio" id="infaq_100" name="infaq_amount" value="100.000" class="h-4 w-4 text-indigo-600 border-gray-300" required>
+                            <label for="infaq_100" class="ml-2 block text-sm text-gray-900">100.000</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="radio" id="infaq_150" name="infaq_amount" value="150.000" class="h-4 w-4 text-indigo-600 border-gray-300">
+                            <label for="infaq_150" class="ml-2 block text-sm text-gray-900">150.000</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="radio" id="infaq_200" name="infaq_amount" value="200.000" class="h-4 w-4 text-indigo-600 border-gray-300">
+                            <label for="infaq_200" class="ml-2 block text-sm text-gray-900">200.000</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="radio" id="infaq_other" name="infaq_amount" value="lainnya" class="h-4 w-4 text-indigo-600 border-gray-300">
+                            <label for="infaq_other" class="ml-2 block text-sm text-gray-900">Nominal Lainnya</label>
+                        </div>
+                        <input type="text" id="infaq_other_input" class="form-input mt-2" placeholder="Tulis jumlah infaq lainnya" style="display: none;">
+                    </div>
+                </div>
+                
+                <div class="text-center bg-gray-100 p-4 rounded-lg">
+                    <p class="font-semibold text-gray-700">Transfer ke:</p>
+                    <p class="text-gray-900 font-bold">BRI 792001004739531</p>
+                    <p class="text-gray-900 font-bold">a.n. GINA ARINA</p>
+                </div>
+
+                <div>
+                    <label for="photo" class="block text-sm font-bold text-gray-700">Upload Bukti transfer (maks. 1MB)</label>
+                    <input type="file" id="photo" name="photo" class="form-input" accept="image/*">
+                </div>
+                
+                <button type="submit" id="submitBtn" class="btn btn-submit" disabled>
+                    <span>Kirim Formulir</span>
+                    <div id="loadingIndicator" class="loading-spinner ml-2 hidden"></div>
+                </button>
+            </form>
+            <div id="statusIndicator" class="status-indicator">Menghubungkan...</div>
+        </div>
+
+        <!-- Password View -->
+        <div id="passwordView" class="view-section justify-center items-center h-full space-y-4">
+            <h2 class="text-2xl font-bold text-center text-gray-800">Masuk Dashboard</h2>
+            <p class="text-center text-gray-600">Masukkan kata sandi admin</p>
+            <input type="password" id="adminPassword" class="form-input w-full md:w-1/2 mx-auto" placeholder="Kata Sandi">
+            <button id="loginBtn" class="btn btn-submit md:w-1/2 mx-auto">Masuk</button>
+            <div id="loginStatus" class="status-indicator"></div>
+        </div>
+
+        <!-- Dashboard View -->
+        <div id="dashboardView" class="view-section">
+            <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Dashboard Admin</h1>
+            <div class="flex justify-between items-center mb-4 flex-wrap gap-4">
+                <div class="bg-gray-100 p-3 rounded-lg font-semibold text-gray-700">
+                    Jumlah Pendaftar: <span id="registrantCount" class="font-bold">0</span>
+                </div>
+                <div class="bg-gray-100 p-3 rounded-lg font-semibold text-gray-700">
+                    Infak Terkumpul: <span id="totalInfaq" class="font-bold">Rp0</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-semibold text-gray-700">Status Pendaftaran:</span>
+                    <span id="registrationStatusText" class="text-sm text-green-600 font-bold">Buka</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="registrationToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <button id="exportBtn" class="btn btn-export">
+                <span>Ekspor Data (CSV)</span>
+            </button>
+            <div id="submissionsContainer" class="flex flex-col gap-6 mt-4">
+                <p class="text-center text-gray-500">Memuat data...</p>
+            </div>
+            <div id="dashboardStatusIndicator" class="status-indicator"></div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal-overlay hidden">
+        <div class="modal-content space-y-4">
+            <h3 class="text-2xl font-bold text-gray-800">Formulir berhasil dikirim!</h3>
+            <p class="text-gray-600">Terima kasih telah mengisi formulir. Silakan bergabung dalam Grup WhatsApp untuk informasi lebih lanjut.</p>
+            <div class="flex modal-btn-group mt-6">
+                <a id="joinWaBtn" href="https://chat.whatsapp.com/HXUOkk49ZTCC9sz4UgolRU?mode=ems_copy_t" target="_blank" class="btn modal-btn bg-indigo-600 hover:bg-indigo-700">Gabung</a>
+                <button id="closeModalBtn" class="btn modal-btn bg-gray-400 hover:bg-gray-500">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="messageBox" class="message-box"></div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, onSnapshot, setLogLevel, doc, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Setel level log untuk melihat debug info
+        setLogLevel('debug');
+
+        // Deteksi lingkungan untuk menggunakan konfigurasi yang benar
+        let firebaseConfig, initialAuthToken;
+        let isCanvasEnvironment = false;
+        try {
+            if (typeof __firebase_config !== 'undefined') {
+                firebaseConfig = JSON.parse(__firebase_config);
+                initialAuthToken = __initial_auth_token;
+                isCanvasEnvironment = true;
+            }
+        } catch (e) {
+            console.error("Failed to load environment variables:", e);
+        }
+
+        // Jika bukan di lingkungan kanvas, gunakan konfigurasi manual
+        if (!isCanvasEnvironment) {
+            // GANTI DENGAN KONFIGURASI FIREBASE ANDA SENDIRI
+            // Anda dapat menemukan ini di Firebase Console > Project settings > Your apps
+            firebaseConfig = {
+                apiKey: "AIzaSyBIBd1KIGWJamZmC7Bjy3aVMA6NYbo4_z4",
+                authDomain: "aplikasi-formulir.firebaseapp.com",
+                projectId: "aplikasi-formulir",
+                storageBucket: "aplikasi-formulir.firebasestorage.app",
+                messagingSenderId: "493488207942",
+                appId: "1:493488207942:web:a6830318cf37d0145db247",
+                measurementId: "G-LVDNCKFR4K"
+            };
+            initialAuthToken = null;
+        }
+
+        const ADMIN_PASSWORD = "4567";
+        const appId = firebaseConfig.projectId;
+
+        let app, db, auth;
+        const formView = document.getElementById('formView');
+        const passwordView = document.getElementById('passwordView');
+        const dashboardView = document.getElementById('dashboardView');
+        const adminIcon = document.getElementById('adminIcon');
+        const adminPasswordInput = document.getElementById('adminPassword');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginStatus = document.getElementById('loginStatus');
+        
+        const formStatusMessage = document.getElementById('formStatusMessage');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const form = document.getElementById('submissionForm');
+        const formInputs = form.querySelectorAll('input, textarea');
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        
+        const registrantCountSpan = document.getElementById('registrantCount');
+        const totalInfaqSpan = document.getElementById('totalInfaq');
+        const registrationToggle = document.getElementById('registrationToggle');
+        const registrationStatusText = document.getElementById('registrationStatusText');
+        const exportBtn = document.getElementById('exportBtn');
+        const submissionsContainer = document.getElementById('submissionsContainer');
+        const dashboardStatusIndicator = document.getElementById('dashboardStatusIndicator');
+        const messageBox = document.getElementById('messageBox');
+
+        const successModal = document.getElementById('successModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        
+        // Fungsi untuk mengelola tampilan
+        function showView(view) {
+            formView.style.display = 'none';
+            passwordView.style.display = 'none';
+            dashboardView.style.display = 'none';
+
+            if (view === 'form') {
+                formView.style.display = 'flex';
+                adminIcon.style.display = 'block';
+            } else if (view === 'password') {
+                passwordView.style.display = 'flex';
+                adminIcon.style.display = 'none';
+                loginStatus.textContent = '';
+                adminPasswordInput.value = '';
+            } else if (view === 'dashboard') {
+                dashboardView.style.display = 'flex';
+                adminIcon.style.display = 'block';
+                // Load dashboard data
+                loadDashboardData();
+            }
+        }
+
+        // Handle Admin Icon click
+        adminIcon.addEventListener('click', () => {
+            const currentView = window.getComputedStyle(formView).display === 'flex' ? 'form' : 'dashboard';
+            if (currentView === 'form') {
+                showView('password');
+            } else {
+                showView('form');
+            }
+        });
+
+        // Handle Login button click
+        loginBtn.addEventListener('click', () => {
+            if (adminPasswordInput.value === ADMIN_PASSWORD) {
+                showView('dashboard');
+                showMessage('Login Berhasil!', 'bg-green-500');
+            } else {
+                loginStatus.textContent = 'Kata sandi salah.';
+                loginStatus.style.color = '#ef4444';
+            }
+        });
+
+        // Toggle "lainnya" input field visibility for source of info
+        const infoSourceRadios = document.querySelectorAll('input[name="info_source"]');
+        const infoOtherInput = document.getElementById('info_other_input');
+        infoSourceRadios.forEach(radio => {
+            radio.addEventListener('change', (event) => {
+                if (event.target.id === 'info_other') {
+                    infoOtherInput.style.display = 'block';
+                    infoOtherInput.required = true;
+                } else {
+                    infoOtherInput.style.display = 'none';
+                    infoOtherInput.required = false;
+                    infoOtherInput.value = '';
+                }
+            });
+        });
+
+        // Toggle "lainnya" input field visibility for infaq amount
+        const infaqAmountRadios = document.querySelectorAll('input[name="infaq_amount"]');
+        const infaqOtherInput = document.getElementById('infaq_other_input');
+        infaqAmountRadios.forEach(radio => {
+            radio.addEventListener('change', (event) => {
+                if (event.target.id === 'infaq_other') {
+                    infaqOtherInput.style.display = 'block';
+                    infaqOtherInput.required = true;
+                } else {
+                    infaqOtherInput.style.display = 'none';
+                    infaqOtherInput.required = false;
+                    infaqOtherInput.value = '';
+                }
+            });
+        });
+
+        // Fungsi untuk memformat angka dengan pemisah titik
+        function formatNumberWithDots(number) {
+            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        // Event listener untuk memformat input nominal infak
+        infaqOtherInput.addEventListener('input', (event) => {
+            const value = event.target.value;
+            const selectionStart = event.target.selectionStart;
+
+            const cleanedValue = value.replace(/\D/g, '');
+            const formattedValue = formatNumberWithDots(cleanedValue);
+            
+            // Menyesuaikan posisi kursor setelah pemformatan
+            const newSelectionStart = selectionStart + (formattedValue.length - value.length);
+            
+            event.target.value = formattedValue;
+            event.target.setSelectionRange(newSelectionStart, newSelectionStart);
+        });
+
+        // Inisialisasi Firebase
+        if (!firebaseConfig || !firebaseConfig.apiKey) {
+            console.error("Firebase config is not provided. Please check the environment setup.");
+            statusIndicator.textContent = 'Gagal: Konfigurasi Firebase tidak ditemukan.';
+            dashboardStatusIndicator.textContent = 'Gagal: Konfigurasi Firebase tidak ditemukan.';
+        } else {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            
+            // Masuk secara anonim, karena ini adalah formulir publik
+            const signIn = initialAuthToken ? signInWithCustomToken(auth, initialAuthToken) : signInAnonymously(auth);
+            
+            signIn.then(() => {
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        statusIndicator.textContent = 'Terhubung!';
+                        statusIndicator.style.color = '#10b981';
+                        dashboardStatusIndicator.textContent = 'Terhubung!';
+                        dashboardStatusIndicator.style.color = '#10b981';
+                        
+                        submitBtn.disabled = false;
+                        exportBtn.disabled = false;
+                        
+                        form.addEventListener('submit', handleFormSubmit);
+                        exportBtn.addEventListener('click', handleExportData);
+                    } else {
+                        statusIndicator.textContent = 'Menghubungkan...';
+                        dashboardStatusIndicator.textContent = 'Menghubungkan...';
+                    }
+                });
+            }).catch((error) => {
+                console.error("Authentication failed:", error);
+                statusIndicator.textContent = 'Gagal terhubung.';
+                statusIndicator.style.color = '#ef4444';
+                dashboardStatusIndicator.textContent = 'Gagal terhubung.';
+                dashboardStatusIndicator.style.color = '#ef4444';
+            });
+
+            // Listener untuk status pendaftaran
+            const registrationDocRef = doc(db, `artifacts/${appId}/public/data/app_settings/registration`);
+            onSnapshot(registrationDocRef, (docSnap) => {
+                const isRegistrationOpen = docSnap.exists() ? docSnap.data().isOpen : true;
+                
+                if (isRegistrationOpen) {
+                    formStatusMessage.classList.add('hidden');
+                    submitBtn.disabled = false;
+                    formInputs.forEach(input => input.disabled = false);
+                    registrationToggle.checked = true;
+                    registrationStatusText.textContent = 'Buka';
+                    registrationStatusText.classList.remove('text-red-600');
+                    registrationStatusText.classList.add('text-green-600');
+                } else {
+                    formStatusMessage.classList.remove('hidden');
+                    submitBtn.disabled = true;
+                    formInputs.forEach(input => input.disabled = true);
+                    registrationToggle.checked = false;
+                    registrationStatusText.textContent = 'Tutup';
+                    registrationStatusText.classList.remove('text-green-600');
+                    registrationStatusText.classList.add('text-red-600');
+                }
+            });
+        }
+        
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            
+            submitBtn.disabled = true;
+            loadingIndicator.classList.remove('hidden');
+            submitBtn.querySelector('span').textContent = 'Mengirim...';
+            
+            const file = document.getElementById('photo').files[0];
+            let photoData = '';
+
+            try {
+                if (!db || !auth.currentUser) {
+                    throw new Error("Firestore database or user is not initialized.");
+                }
+
+                if (file) {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    
+                    await new Promise((resolve, reject) => {
+                        reader.onload = () => {
+                            photoData = reader.result;
+                            resolve();
+                        };
+                        reader.onerror = reject;
+                    });
+                }
+                
+                // Mendapatkan nilai dari radio button dan input "lainnya"
+                const selectedInfoSource = document.querySelector('input[name="info_source"]:checked').value;
+                const infoSource = (selectedInfoSource === 'lainnya') ? document.getElementById('info_other_input').value : selectedInfoSource;
+
+                const selectedInfaqAmount = document.querySelector('input[name="infaq_amount"]:checked').value;
+                let infaqAmount = (selectedInfaqAmount === 'lainnya') ? document.getElementById('infaq_other_input').value.replace(/\./g, '') : selectedInfaqAmount;
+
+                const formData = {
+                    nama: document.getElementById('name').value,
+                    usia: document.getElementById('age').value,
+                    noWa: document.getElementById('phone').value,
+                    pekerjaan: document.getElementById('job').value,
+                    domisili: document.getElementById('domicile').value,
+                    motivasi: document.getElementById('motivation').value,
+                    sumberInfo: infoSource,
+                    infak: parseInt(infaqAmount), // Simpan sebagai angka
+                    buktiTransfer: photoData,
+                    submittedAt: new Date().toISOString()
+                };
+
+                const submissionsCollectionRef = collection(db, `artifacts/${appId}/public/data/form_submissions`);
+                await addDoc(submissionsCollectionRef, formData);
+
+                showSuccessModal();
+                form.reset();
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                showMessage('Gagal mengirim formulir. Silakan coba lagi.', 'bg-red-500');
+            } finally {
+                submitBtn.disabled = false;
+                loadingIndicator.classList.add('hidden');
+                submitBtn.querySelector('span').textContent = 'Kirim Formulir';
+            }
+        }
+
+        async function handleExportData() {
+            try {
+                if (!db || !auth.currentUser) {
+                    throw new Error("Firestore database or user is not initialized.");
+                }
+
+                exportBtn.disabled = true;
+                exportBtn.querySelector('span').textContent = 'Mengekspor...';
+
+                const submissionsCollectionRef = collection(db, `artifacts/${appId}/public/data/form_submissions`);
+                const querySnapshot = await getDocs(submissionsCollectionRef);
+                
+                const submissions = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (data.buktiTransfer) {
+                        data.buktiTransfer = "Terdapat data gambar (base64)";
+                    }
+                    submissions.push(data);
+                });
+
+                if (submissions.length > 0) {
+                    const headers = Object.keys(submissions[0]);
+                    const csvRows = submissions.map(row => 
+                        headers.map(header => row[header]).join(',')
+                    );
+                    const csvContent = [headers.join(','), ...csvRows].join('\n');
+
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `reconnect_with_siroh_submissions_${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    showMessage('Data berhasil diekspor sebagai CSV!');
+                } else {
+                    showMessage('Tidak ada data untuk diekspor.', 'bg-yellow-500');
+                }
+
+            } catch (e) {
+                console.error("Error exporting data: ", e);
+                showMessage('Gagal mengekspor data.', 'bg-red-500');
+            } finally {
+                exportBtn.disabled = false;
+                exportBtn.querySelector('span').textContent = 'Ekspor Data (CSV)';
+            }
+        }
+
+        function loadDashboardData() {
+            if (!db || !auth.currentUser) {
+                console.error("Firestore database or user is not initialized.");
+                return;
+            }
+            
+            const submissionsCollectionRef = collection(db, `artifacts/${appId}/public/data/form_submissions`);
+            
+            // Listener untuk data pendaftar dan total infak
+            onSnapshot(submissionsCollectionRef, (querySnapshot) => {
+                let totalInfaq = 0;
+                registrantCountSpan.textContent = querySnapshot.size;
+                submissionsContainer.innerHTML = '';
+                if (querySnapshot.empty) {
+                    submissionsContainer.innerHTML = `<p class="text-center text-gray-500">Belum ada kiriman formulir.</p>`;
+                    totalInfaqSpan.textContent = `Rp0`;
+                    return;
+                }
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const card = document.createElement('div');
+                    card.className = 'data-card';
+                    
+                    let photoHtml = '';
+                    if (data.buktiTransfer) {
+                        photoHtml = `<img src="${data.buktiTransfer}" alt="Bukti Transfer" class="w-full">`;
+                    }
+                    
+                    // Hitung total infak
+                    if (data.infak) {
+                        totalInfaq += parseInt(data.infak);
+                    }
+                    
+                    // Format infak untuk tampilan
+                    const formattedInfaq = `Rp${formatNumberWithDots(data.infak)}`;
+
+                    card.innerHTML = `
+                        ${photoHtml}
+                        <div class="flex flex-col gap-2">
+                            <p><span class="font-semibold text-gray-700">Nama:</span> ${data.nama}</p>
+                            <p><span class="font-semibold text-gray-700">Usia:</span> ${data.usia}</p>
+                            <p><span class="font-semibold text-gray-700">No.WA:</span> ${data.noWa}</p>
+                            <p><span class="font-semibold text-gray-700">Pekerjaan:</span> ${data.pekerjaan}</p>
+                            <p><span class="font-semibold text-gray-700">Domisili:</span> ${data.domisili}</p>
+                            <p><span class="font-semibold text-gray-700">Motivasi:</span> ${data.motivasi}</p>
+                            <p><span class="font-semibold text-gray-700">Sumber Info:</span> ${data.sumberInfo}</p>
+                            <p><span class="font-semibold text-gray-700">Infak:</span> ${formattedInfaq}</p>
+                            <p class="text-xs text-gray-400">Dikirim pada: ${new Date(data.submittedAt).toLocaleString()}</p>
+                        </div>
+                        <button class="delete-btn" data-doc-id="${doc.id}">Hapus</button>
+                    `;
+                    submissionsContainer.appendChild(card);
+                });
+                
+                // Tampilkan total infak yang sudah diformat
+                totalInfaqSpan.textContent = `Rp${formatNumberWithDots(totalInfaq)}`;
+
+                // Tambahkan event listener untuk tombol hapus
+                submissionsContainer.addEventListener('click', async (event) => {
+                    if (event.target.classList.contains('delete-btn')) {
+                        const docId = event.target.dataset.docId;
+                        if (docId) {
+                            try {
+                                await deleteDoc(doc(db, `artifacts/${appId}/public/data/form_submissions`, docId));
+                                showMessage('Data berhasil dihapus!', 'bg-red-500');
+                            } catch (e) {
+                                console.error("Error removing document: ", e);
+                                showMessage('Gagal menghapus data.', 'bg-red-500');
+                            }
+                        }
+                    }
+                });
+            });
+            const registrationDocRef = doc(db, `artifacts/${appId}/public/data/app_settings/registration`);
+            // Handle toggle registration status
+            registrationToggle.addEventListener('change', async (event) => {
+                const isOpen = event.target.checked;
+                try {
+                    await setDoc(registrationDocRef, { isOpen: isOpen }, { merge: true });
+                    showMessage(`Pendaftaran berhasil ${isOpen ? 'dibuka' : 'ditutup'}!`, 'bg-green-500');
+                } catch (e) {
+                    console.error("Error updating registration status: ", e);
+                    showMessage('Gagal memperbarui status pendaftaran.', 'bg-red-500');
+                }
+            });
+        }
+
+        function showMessage(message, bgColor = 'bg-green-500') {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = message;
+            messageBox.className = `message-box ${bgColor}`;
+            messageBox.style.opacity = '1';
+            
+            setTimeout(() => {
+                messageBox.style.opacity = '0';
+            }, 3000);
+        }
+
+        function showSuccessModal() {
+            successModal.classList.remove('hidden');
+            successModal.style.display = 'flex';
+        }
+
+        closeModalBtn.addEventListener('click', () => {
+            successModal.style.display = 'none';
+        });
+
+    </script>
+</body>
+</html>
